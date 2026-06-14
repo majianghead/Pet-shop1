@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>萌宠之家 - 找一只陪你过日子的毛孩子</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="nav"></div>
+
+  <!-- 浮动装饰元素 -->
+  <div class="floating-deco deco-1">🐾</div>
+  <div class="floating-deco deco-2">✨</div>
+  <div class="floating-deco deco-3">🐾</div>
+  <div class="floating-deco deco-4">💕</div>
+
+  <div class="container">
+    <div class="hero">
+      <div class="hero-deco hero-deco-1">🐾</div>
+      <div class="hero-deco hero-deco-2">🐾</div>
+      <div class="hero-deco hero-deco-3">✨</div>
+      <h1>找一只陪你过日子的毛孩子 🐶🐱</h1>
+      <p>每一只小家伙都值得一个温暖的家</p>
+      <a href="/pets.html" class="btn btn-lg" style="background: white; color: var(--primary);">看看小可爱们 →</a>
+    </div>
+
+    <!-- 分类入口 -->
+    <h2 class="section-title">按种类逛逛</h2>
+    <div class="species-grid" id="species-grid"></div>
+
+    <h2 class="section-title" style="margin-top: 48px;">精选推荐</h2>
+    <div id="featured" class="pet-grid">
+      <div class="empty"><div class="empty-icon">⏳</div>加载中...</div>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 48px;">为什么选择我们</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background: linear-gradient(135deg, #ffd6a5, #ffaaa5);">🏥</div>
+        <h3>健康保障</h3>
+        <p>所有宠物完成基础疫苗和驱虫,带健康记录</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background: linear-gradient(135deg, #a8e6cf, #88c5ff);">💝</div>
+        <h3>售后无忧</h3>
+        <p>7 天健康保障,养殖过程全程可追溯</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background: linear-gradient(135deg, #ffc4d6, #ffb088);">🚚</div>
+        <h3>全国配送</h3>
+        <p>专业活体运输,安全送达</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background: linear-gradient(135deg, #ffe5b4, #ffc78a);">📞</div>
+        <h3>终身咨询</h3>
+        <p>兽医 + 养宠顾问 24h 在线答疑</p>
+      </div>
+    </div>
+
+    <!-- 底部 CTA -->
+    <div class="cta-banner">
+      <h2>准备好迎接新的小伙伴了吗?</h2>
+      <p>注册账号,领养你的第一只毛孩子</p>
+      <a href="/login.html" class="btn btn-lg" style="background: white; color: var(--primary); margin-top: 12px;">立即注册</a>
+    </div>
+  </div>
+
+  <div class="footer">© 2026 萌宠之家 · 用爱给每一只毛孩子一个家 🏠</div>
+
+  <script src="/js/common.js"></script>
+  <script>
+    initPage('home').then(async () => {
+      // 分类入口
+      try {
+        const res = await api('/api/pets');
+        const speciesGrid = document.getElementById('species-grid');
+        const counts = {};
+        res.data.forEach(p => { counts[p.species] = (counts[p.species] || 0) + 1; });
+        speciesGrid.innerHTML = SPECIES
+          .filter(s => counts[s.key])
+          .map(s => `
+            <a class="species-card" href="/pets.html?species=${encodeURIComponent(s.key)}" style="--c1: ${s.color}; --c2: ${shadeColor(s.color, -20)};">
+              <div class="species-icon">${s.icon}</div>
+              <div class="species-name">${s.key}</div>
+              <div class="species-count">${counts[s.key]} 只</div>
+            </a>
+          `).join('');
+      } catch (e) { console.error(e); }
+
+      // 精选
+      try {
+        const res = await api('/api/pets');
+        const featured = res.data.filter(p => p.status === 'available').slice(0, 4);
+        const el = document.getElementById('featured');
+        if (featured.length === 0) {
+          el.innerHTML = '<div class="empty"><div class="empty-icon">🐾</div>暂无推荐</div>';
+        } else {
+          el.innerHTML = featured.map(petCard).join('');
+        }
+      } catch (err) {
+        document.getElementById('featured').innerHTML =
+          `<div class="empty"><div class="empty-icon">⚠️</div>${err.message}</div>`;
+      }
+    });
+
+    // 颜色加深工具
+    function shadeColor(hex, percent) {
+      let f = parseInt(hex.slice(1), 16),
+        t = percent < 0 ? 0 : 255,
+        p = percent < 0 ? percent * -1 / 100 : percent / 100,
+        R = f >> 16,
+        G = (f >> 8) & 0x00FF,
+        B = f & 0x0000FF;
+      return '#' + (0x1000000 + (Math.round((t - R) * p) + R) * 0x10000 + (Math.round((t - G) * p) + G) * 0x100 + (Math.round((t - B) * p) + B)).toString(16).slice(1);
+    }
+  </script>
+</body>
+</html>
